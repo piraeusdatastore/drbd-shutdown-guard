@@ -1,0 +1,58 @@
+stages:
+  - prepare
+  - build
+  - publish
+
+prepare:
+  image: ${LINBIT_DOCKER_REGISTRY}/build-helpers:latest
+  stage: prepare
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == 'master'
+    - if: $CI_COMMIT_TAG
+  variables:
+    # git describe needs full history access
+    GIT_DEPTH: 0
+    # git describe does not need the submodule
+    GIT_SUBMODULE_STRATEGY: none
+  script:
+    - SEMVER="$(semver-from-git.py)"
+    - echo "SEMVER=${SEMVER}" >> .ci-build.env
+    - echo "TAG=v${SEMVER/+/-}" >> .ci-build.env
+    - echo "IMAGE=${LINBIT_DOCKER_REGISTRY}/drbd-shutdown-guard:v${SEMVER/+/-}" >> .ci-build.env
+  artifacts:
+    reports:
+      dotenv: .ci-build.env
+
+build:
+  stage: build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_DEPTH: 1
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == 'master'
+    - if: $CI_COMMIT_TAG
+  tags:
+    - multiarch
+  script:
+    # Use NOCACHE=true for release builds
+    - if [ -n "${CI_COMMIT_TAG}" ]; then NOCACHE=true ; else NOCACHE=false ; fi
+    - ln -snf $DOCKER_AUTH_CONFIG_FILE $HOME/.docker/config.json
+    - docker buildx build --pull --push --platform ${PUBLISH_PLATFORMS} -t ${IMAGE} --build-arg=VERSION=${SEMVER} --no-cache="${NOCACHE}" .
+
+publish:
+  stage: publish
+  rules:
+    - if: $CI_COMMIT_TAG
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p $HOME/.docker
+    - ln -snf $DOCKER_PUBLISH_AUTH_CONFIG_FILE $HOME/.docker/config.json
+    - for PLATFORM in $(echo $PUBLISH_PLATFORMS | tr ',' '\n') ; do
+    -   ARCH=${PLATFORM#*/}
+    -   crane copy --platform $PLATFORM $IMAGE $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG
+    -   crane tag $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG latest
+    - done
