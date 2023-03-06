@@ -11,7 +11,7 @@ metadata:
 spec:
   initContainers:
     - name: drbd-shutdown-guard
-      image: drbd-shutdown-guard:latest
+      image: quay.io/piraeusdatastore/drbd-shutdown-guard:latest
       securityContext:
         privileged: true
         readOnlyRootFilesystem: true

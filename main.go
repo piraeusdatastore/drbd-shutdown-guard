@@ -34,7 +34,7 @@ func main() {
 	cmd := cobra.Command{
 		Use:     ServiceBinaryName,
 		Version: vars.Version,
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			log.Printf("Running %s version %s\n", ServiceBinaryName, vars.Version)
 		},
 	}
