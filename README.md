@@ -16,25 +16,19 @@ spec:
         privileged: true
         readOnlyRootFilesystem: true
       volumeMounts:
-      - name: run-systemd-system
-        mountPath: /run/systemd/system/
+      - name: run-systemd
+        mountPath: /run/systemd
       - name: run-drbd-shutdown-guard
         mountPath: /run/drbd-shutdown-guard
-      - name: systemd-bus-socket
-        mountPath: /run/dbus/system_bus_socket
   volumes:
-    - name: run-systemd-system
+    - name: run-systemd
       hostPath:
-        path: /run/systemd/system/
+        path: /run/systemd
         type: Directory
     - name: run-drbd-shutdown-guard
       hostPath:
         path: /run/drbd-shutdown-guard
         type: DirectoryOrCreate
-    - name: systemd-bus-socket
-      hostPath:
-        path: /run/dbus/system_bus_socket
-        type: Socket
 ```
 
 ## `drbd-shutdown-guard execute`

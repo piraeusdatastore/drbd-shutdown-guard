@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -48,6 +49,19 @@ func main() {
 	}
 }
 
+type errorWithOutput struct {
+	error
+}
+
+func (e errorWithOutput) Error() string {
+	var exitErr exec.ExitError
+	if errors.Is(e.error, &exitErr) {
+		return fmt.Sprintf("%s:\n%s", exitErr.String(), exitErr.Stderr)
+	}
+
+	return e.error.Error()
+}
+
 func install() *cobra.Command {
 	return &cobra.Command{
 		Use:  "install",
@@ -55,10 +69,24 @@ func install() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			log.Printf("Creating service directory '%s'\n", ServiceRuntimeDirectory)
-			err := os.MkdirAll(ServiceRuntimeDirectory, os.FileMode(0755))
+			stat, err := os.Stat(SystemdRuntimeDirectory)
 			if err != nil {
-				return fmt.Errorf("failed to create systemd runtime unit directory '%s': %w", SystemdRuntimeDirectory, err)
+				if os.IsNotExist(err) {
+					log.Printf("systemd service directory '%s' does not exist, skipping installation\n", SystemdRuntimeDirectory)
+					return nil
+				}
+
+				return fmt.Errorf("failed to stat systemd service directory '%s': %w", SystemdRuntimeDirectory, err)
+			}
+
+			if !stat.IsDir() {
+				return fmt.Errorf("systemd service directory '%s' is not a directory: %s", SystemdRuntimeDirectory, stat.Mode())
+			}
+
+			log.Printf("Creating service directory '%s'\n", ServiceRuntimeDirectory)
+			err = os.MkdirAll(ServiceRuntimeDirectory, os.FileMode(0755))
+			if err != nil {
+				return fmt.Errorf("failed to create service runtime directory '%s': %w", ServiceRuntimeDirectory, err)
 			}
 
 			log.Printf("Copying drbdsetup to service directory\n")
@@ -85,11 +113,6 @@ func install() *cobra.Command {
 			}
 
 			log.Printf("Creating systemd unit %s in %s\n", SystemdServiceName, SystemdRuntimeDirectory)
-			err = os.MkdirAll(SystemdRuntimeDirectory, os.FileMode(0755))
-			if err != nil {
-				return fmt.Errorf("failed to create systemd runtime unit directory '%s': %w", SystemdRuntimeDirectory, err)
-			}
-
 			err = atomicCreateFile(path.Join(SystemdRuntimeDirectory, SystemdServiceName), os.FileMode(0644), writeShutdownServiceUnit)
 			if err != nil {
 				return fmt.Errorf("failed to write service unit '%s': %w", ServiceRuntimeDirectory, err)
@@ -102,9 +125,9 @@ func install() *cobra.Command {
 			}
 
 			log.Printf("Starting systemd unit %s\n", SystemdServiceName)
-			err = exec.CommandContext(ctx, "systemctl", "start", SystemdServiceName).Run()
+			_, err = exec.CommandContext(ctx, "systemctl", "start", SystemdServiceName).Output()
 			if err != nil {
-				return fmt.Errorf("failed to start systemd service '%s': %w", SystemdServiceName, err)
+				return fmt.Errorf("failed to start systemd service '%s': %w", SystemdServiceName, errorWithOutput{err})
 			}
 
 			log.Printf("Install successful\n")
