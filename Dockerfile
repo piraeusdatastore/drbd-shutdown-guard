@@ -1,8 +1,8 @@
 FROM --platform=$TARGETPLATFORM gcc:latest as utils-builder
 
-RUN apt-get update && apt-get install -y flex
+RUN apt-get update && apt-get install -y flex libkeyutils-dev
 
-ARG DRBD_UTILS_VERSION=9.23.0
+ARG DRBD_UTILS_VERSION=9.27.0
 RUN curl -fsSL "https://pkg.linbit.com/downloads/drbd/utils/drbd-utils-$DRBD_UTILS_VERSION.tar.gz" | tar -xzv \
     && cd "drbd-utils-$DRBD_UTILS_VERSION" \
     && LDFLAGS=-static CFLAGS=-static ./configure --without-83support --without-84support --without-manual --without-drbdmon \
