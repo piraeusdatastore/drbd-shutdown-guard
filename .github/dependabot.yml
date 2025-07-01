@@ -6,8 +6,6 @@ updates:
       interval: "weekly"
     allow:
       - dependency-type: all
-    reviewers:
-      - WanzenBug
     groups:
       gomod:
         patterns:
@@ -16,8 +14,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    reviewers:
-      - WanzenBug
     groups:
       ci:
         patterns:
