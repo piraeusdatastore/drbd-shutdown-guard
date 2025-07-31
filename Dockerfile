@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM gcc:latest as utils-builder
+FROM --platform=$TARGETPLATFORM gcc:13 as utils-builder
 
 RUN apt-get update && apt-get install -y flex libkeyutils-dev
 
