@@ -31,6 +31,8 @@ build:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_DEPTH: 1
     NOCACHE: "false"
+    # Release for tnf-drbd-fencing.py
+    DRBD_UTILS_SRC: ${LINBIT_REGISTRY_URL}/repository/lbbuild-upstream/drbd-utils-9.0.0.916c1de8edb4db559cc6db483838ba1f3253b73a.tar.gz
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == 'main'
@@ -38,7 +40,7 @@ build:
       variables:
         NOCACHE: "true"
   script:
-    - docker buildx build --pull --push --platform ${PUBLISH_PLATFORMS} -t ${IMAGE} --build-arg=VERSION=${SEMVER} --no-cache="${NOCACHE}" .
+    - docker buildx build --pull --push --platform ${PUBLISH_PLATFORMS} -t ${IMAGE} --build-arg=VERSION=${SEMVER} --build-arg=DRBD_UTILS_SRC=${DRBD_UTILS_SRC} --no-cache="${NOCACHE}" .
 
 publish:
   stage: publish
