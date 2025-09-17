@@ -45,7 +45,7 @@ build:
 publish:
   stage: publish
   variables:
-    DOCKER_AUTH_CONFIG_FROM: DOCKER_PUBLISH_AUTH_CONFIG_FILE
+    REGISTRY_AUTH_FILE: ${DOCKER_PUBLISH_AUTH_CONFIG_FILE}
   rules:
     - if: $CI_COMMIT_TAG
   image: ${LINBIT_DOCKER_REGISTRY}/container-tools:latest
@@ -55,3 +55,5 @@ publish:
     -   crane copy --platform $PLATFORM $IMAGE $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG
     -   crane tag $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG latest
     - done
+    - crane copy $IMAGE $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG
+    - crane copy $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG latest
