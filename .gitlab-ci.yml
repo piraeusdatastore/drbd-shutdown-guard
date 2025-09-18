@@ -45,7 +45,7 @@ build:
 publish:
   stage: publish
   variables:
-    REGISTRY_AUTH_FILE: ${DOCKER_PUBLISH_AUTH_CONFIG_FILE}
+    DOCKER_AUTH_CONFIG_FROM: DOCKER_PUBLISH_AUTH_CONFIG_FILE
   rules:
     - if: $CI_COMMIT_TAG
   image: ${LINBIT_DOCKER_REGISTRY}/container-tools:latest
