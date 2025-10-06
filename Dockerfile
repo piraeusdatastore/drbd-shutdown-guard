@@ -27,9 +27,11 @@ RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=$TARGETOS
 FROM registry.access.redhat.com/ubi9/ubi:latest
 
 COPY --link --from=utils-build /usr/local/sbin/drbdsetup /usr/local/sbin/drbdsetup
-COPY --link --from=utils-build /usr/local/lib/drbd/tnf-drbd-fence.py /usr/local/lib/drbd/tnf-drbd-fence.py
+# Disable until next official release
+# COPY --link --from=utils-build /usr/local/lib/drbd/tnf-drbd-fence.py /usr/local/lib/drbd/tnf-drbd-fence.py
 COPY --link --from=go-build /work/drbd-shutdown-guard /usr/local/sbin/drbd-shutdown-guard
 
 ENV DRBDSETUP_LOCATION=/usr/local/sbin/drbdsetup
-ENV TNF_DRBD_FENCE_LOCATION=/usr/local/lib/drbd/tnf-drbd-fence.py
+# Disable until next official release
+# ENV TNF_DRBD_FENCE_LOCATION=/usr/local/lib/drbd/tnf-drbd-fence.py
 CMD ["/usr/local/sbin/drbd-shutdown-guard", "install"]
