@@ -11,8 +11,8 @@ import (
 	"os/signal"
 	"path"
 
+	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/spf13/cobra"
-
 	"golang.org/x/sync/errgroup"
 
 	"github.com/piraeusdatastore/drbd-shutdown-guard/pkg/vars"
@@ -95,19 +95,35 @@ func install() *cobra.Command {
 				return fmt.Errorf("failed to write service unit '%s': %w", ServiceRuntimeDirectory, err)
 			}
 
+			log.Printf("Connect to systemd bus")
+			conn, err := dbus.NewSystemConnectionContext(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to connect to systemd bus: %w", err)
+			}
+
 			log.Printf("Reloading systemd\n")
-			err = exec.CommandContext(ctx, "systemctl", "daemon-reload").Run()
+			err = conn.ReloadContext(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to reload systemd")
 			}
 
+			result := make(chan string, 1)
 			log.Printf("Starting systemd unit %s\n", SystemdServiceName)
-			err = exec.CommandContext(ctx, "systemctl", "start", SystemdServiceName).Run()
+			_, err = conn.StartUnitContext(ctx, SystemdServiceName, "replace", result)
 			if err != nil {
 				return fmt.Errorf("failed to start systemd service '%s': %w", SystemdServiceName, err)
 			}
 
-			log.Printf("Install successful\n")
+			select {
+			case s := <-result:
+				if s == "done" {
+					log.Printf("Install successful\n")
+				} else {
+					return fmt.Errorf("systemd start job failed: %s", s)
+				}
+			case <-ctx.Done():
+				return fmt.Errorf("systemd start job cancelled")
+			}
 
 			return nil
 		},
