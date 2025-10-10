@@ -55,5 +55,5 @@ publish:
     -   crane copy --platform $PLATFORM $IMAGE $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG
     -   crane tag $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG latest
     - done
-    - crane copy $IMAGE $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG
-    - crane copy $PUBLISH_REGISTRY/$ARCH/drbd-shutdown-guard:$TAG latest
+    - crane copy $IMAGE $PUBLISH_REGISTRY/drbd-shutdown-guard:$TAG
+    - crane tag $PUBLISH_REGISTRY/drbd-shutdown-guard:$TAG latest
