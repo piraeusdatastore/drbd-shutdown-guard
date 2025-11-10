@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/coreos/go-systemd/v22 v22.6.0
 	github.com/spf13/cobra v1.10.1
-	golang.org/x/sync v0.17.0
+	golang.org/x/sync v0.18.0
 )
 
 require (
