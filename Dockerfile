@@ -3,7 +3,7 @@ FROM gcc:latest AS utils-build
 RUN apt-get update && apt-get install -y flex libkeyutils-dev
 
 WORKDIR /src
-ARG DRBD_UTILS_SRC=https://pkg.linbit.com//downloads/drbd/utils/drbd-utils-9.33.0-rc.1.tar.gz
+ARG DRBD_UTILS_SRC=https://pkg.linbit.com//downloads/drbd/utils/drbd-utils-9.33.0.tar.gz
 RUN curl -fsSL "$DRBD_UTILS_SRC" | tar -xzv --strip-components=1 \
     && LDFLAGS=-static CFLAGS=-static ./configure --without-84support --without-manual --without-drbdmon \
     && make \
