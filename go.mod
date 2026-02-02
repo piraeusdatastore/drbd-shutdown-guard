@@ -3,7 +3,7 @@ module github.com/piraeusdatastore/drbd-shutdown-guard
 go 1.24.0
 
 require (
-	github.com/coreos/go-systemd/v22 v22.6.0
+	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/sync v0.19.0
 )
