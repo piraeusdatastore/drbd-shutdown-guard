@@ -176,17 +176,22 @@ func execute() *cobra.Command {
 func writeShutdownServiceUnit(f *os.File) error {
 	_, err := f.WriteString(fmt.Sprintf(`[Unit]
 Description=Ensure that DRBD devices with suspended IO are resumed (with potential IO errors) during shutdown.
-# Ensure the stop action only runs after normal container shut down
-Before=kubelet.service
+# Ensure the stop action only runs after normal container shut down.
+# k3s, RKE2, MicroK8s and k0s run the kubelet inside their own units instead of kubelet.service.
+Before=kubelet.service k3s.service k3s-agent.service rke2-server.service rke2-agent.service snap.microk8s.daemon-kubelite.service k0scontroller.service k0sworker.service
 # Ensure we get stopped during shutdown
 Conflicts=umount.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# Some distributions (Ubuntu, for one) mount /run noexec. Allow exec from our directory
+# inside the unit's mount namespace. systemd < 248 ignores this setting.
+ExecPaths=%s
 Environment=DRBDSETUP_LOCATION=%s
+ExecStart=%s --version
 ExecStop=%s execute
-`, path.Join(ServiceRuntimeDirectory, DrbdSetupBinaryName), path.Join(ServiceRuntimeDirectory, ServiceBinaryName)))
+`, ServiceRuntimeDirectory, path.Join(ServiceRuntimeDirectory, DrbdSetupBinaryName), path.Join(ServiceRuntimeDirectory, ServiceBinaryName), path.Join(ServiceRuntimeDirectory, ServiceBinaryName)))
 	if err != nil {
 		return fmt.Errorf("failed to write unit file: %w", err)
 	}
