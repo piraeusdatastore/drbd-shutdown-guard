@@ -51,15 +51,20 @@ during system shutdown. The systemd unit will look like this:
 ```
 [Unit]
 Description=Ensure that DRBD devices with suspended IO are resumed (with potential IO errors) during shutdown.
-# Ensure the stop action only runs after normal container shut down
-Before=kubelet.service
+# Ensure the stop action only runs after normal container shut down.
+# k3s, RKE2, MicroK8s and k0s run the kubelet inside their own units instead of kubelet.service.
+Before=kubelet.service k3s.service k3s-agent.service rke2-server.service rke2-agent.service snap.microk8s.daemon-kubelite.service k0scontroller.service k0sworker.service
 # Ensure we get stopped during shutdown
 Conflicts=umount.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# Some distributions (Ubuntu, for one) mount /run noexec. Allow exec from our directory
+# inside the unit's mount namespace. systemd < 248 ignores this setting.
+ExecPaths=/run/drbd-shutdown-guard
 Environment=DRBDSETUP_LOCATION=/run/drbd-shutdown-guard/drbdsetup
+ExecStart=/run/drbd-shutdown-guard/drbd-shutdown-guard --version
 ExecStop=/run/drbd-shutdown-guard/drbd-shutdown-guard execute
 ```
 
